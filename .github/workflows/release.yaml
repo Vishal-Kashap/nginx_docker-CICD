@@ -1,0 +1,56 @@
+name: Create and Push Tag
+
+on:
+  push:
+    branches:
+      - release/*
+
+jobs:
+  create_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh -T git@github.com || true
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin git@github.com:Vishal-Kashap/nginx_docker-CICD.git
+
+      - name: Create a tag based on commit count
+        run: |
+          TAG="v1.8.$(git rev-list --count HEAD)"
+          git tag $TAG
+          git push origin $TAG
+
+      - name: Fetch all branches
+        run: |
+          git fetch --all
+
+      - name: Checkout and Update Main Branch
+        run: |
+          git checkout main
+          git pull origin main
+
+      - name: Checkout and Update Dev Branch
+        run: |
+          git checkout dev
+          git pull origin dev
+
+      - name: Merge dev into main
+        run: |
+          git checkout main
+          git merge dev --no-ff --commit -m "Merging release branch"
+          git push origin main
