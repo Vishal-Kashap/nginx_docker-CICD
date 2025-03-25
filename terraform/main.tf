@@ -10,7 +10,6 @@ key_name = "vishal"
 
   vpc_security_group_ids = ["sg-0e5d29266c98b2473"]
 
-  
   user_data = file("${path.module}/userdata.sh")
 
   tags = {
